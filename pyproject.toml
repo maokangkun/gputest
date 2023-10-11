@@ -1,0 +1,32 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "gputest"
+version = "1.1.1"
+authors = [
+    { name="Kangkun Mao", email="maokangkun@pjlab.org.cn" },
+]
+description = "A tool for reporting GPU benchmark results and information"
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    'torch',
+    'psutil',
+    'torchvision',
+    'transformers',
+    'nvidia-ml-py',
+]
+
+[project.urls]
+"Homepage" = "https://github.com/maokangkun/gputest"
+"Bug Tracker" = "https://github.com/maokangkun/gputest/issues"
+
+[project.scripts]
+gputest = "gputest.main:main"
