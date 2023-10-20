@@ -178,8 +178,11 @@ def run_gpu_p2p_benchmark():
 
 def main():
     watermark()
-    run_benchmark()
-    run_profiler()
+    if torch.cuda.is_available() and torch.cuda.device_count() > 0:
+        run_benchmark()
+        run_profiler()
+    else:
+        print(f'[Warning] torch cuda: {torch.cuda.is_available()}, GPU total nums: {pynvml.nvmlDeviceGetCount()}, availabel: {torch.cuda.device_count()}')
 
 if __name__ == '__main__':
     main()
