@@ -1,0 +1,56 @@
+┌──────────────────────────┐
+│ Experimental Environment │
+└──────────────────────────┘
+platform: Linux-3.10.0-957.el7.x86_64-x86_64-with-glibc2.17
+node: SH-IDC1-10-140-24-109
+time: 2022-09-30 11:40:43.926989
+python interpreter: /mnt/lustre/maokangkun/anaconda3/bin/python
+python version: 3.9.13 (main, Aug 25 2022, 23:26:10) [GCC 11.2.0]
+torch version: 1.12.1
+device: gpu
+CUDA version: 11.3
+driver version: 470.129.06
+cuDNN version: 8302
+gpu usable count: 1
+gpu total count: 8
+    gpu 0: NVIDIA A100-SXM4-80GB, [mem]  5349M / 81251M,  7%,  31°C, 🔋 0
+    gpu 1: NVIDIA A100-SXM4-80GB, [mem] 76854M / 81251M, 95%,  54°C, 🔋 0
+    gpu 2: NVIDIA A100-SXM4-80GB, [mem] 76918M / 81251M, 95%,  49°C, 🔋 0
+    gpu 3: NVIDIA A100-SXM4-80GB, [mem]     3M / 81251M,  0%,  28°C, 🔋 0
+    gpu 4: NVIDIA A100-SXM4-80GB, [mem]     3M / 81251M,  0%,  28°C, 🔋 0
+    gpu 5: NVIDIA A100-SXM4-80GB, [mem]     3M / 81251M,  0%,  30°C, 🔋 0
+    gpu 6: NVIDIA A100-SXM4-80GB, [mem] 32370M / 81251M, 40%,  45°C, 🔋 0
+    gpu 7: NVIDIA A100-SXM4-80GB, [mem]     3M / 81251M,  0%,  28°C, 🔋 0
+cpu: [logical] 256, [physical] 128, [usage] 53.3%
+current dir: /mnt/petrelfs/maokangkun/gpu_test
+user: maokangkun
+shell: /bin/bash
+┌─────────────────────────────────┐
+│ Matrix Multiplication Benchmark │
+└─────────────────────────────────┘
+Matrix: A [16384 x 16384], B [16384 x 16384]
+Tensor: torch.float16
+Operation: A @ B
+Experiment: 50
+Cost time: 0.03369s (median)
+Performance: 261.1158 TFLOPS
+┌─────────────────────────────┐
+│ Resnet18 Inference Profiler │
+└─────────────────────────────┘
+-------------------------------------------------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  
+                                                   Name    Self CPU %      Self CPU   CPU total %     CPU total  CPU time avg     Self CUDA   Self CUDA %    CUDA total  CUDA time avg       CPU Mem  Self CPU Mem      CUDA Mem  Self CUDA Mem    # of Calls  
+-------------------------------------------------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  
+                                        model_inference         0.16%       3.692ms        99.99%        2.346s        2.346s       0.000us         0.00%       1.689ms       1.689ms          -4 b        -260 b           0 b    -106.30 Mb             1  
+                                           aten::conv2d         0.01%     209.000us        93.85%        2.202s     110.116ms       0.000us         0.00%       1.105ms      55.250us           0 b           0 b      47.37 Mb           0 b            20  
+                                      aten::convolution         0.02%     521.000us        93.84%        2.202s     110.106ms       0.000us         0.00%       1.105ms      55.250us           0 b           0 b      47.37 Mb           0 b            20  
+                                     aten::_convolution         0.03%     686.000us        93.81%        2.202s     110.080ms       0.000us         0.00%       1.105ms      55.250us           0 b           0 b      47.37 Mb           0 b            20  
+                                aten::cudnn_convolution        14.83%     347.922ms        93.79%        2.201s     110.045ms       1.105ms        65.42%       1.105ms      55.250us           0 b           0 b      47.37 Mb     -42.17 Mb            20  
+void cudnn::ops::nchwToNhwcKernel<float, float, floa...         0.00%       0.000us         0.00%       0.000us       0.000us     320.000us        18.95%     320.000us       9.412us           0 b           0 b           0 b           0 b            34  
+                                       aten::batch_norm         0.00%      68.000us         5.46%     128.071ms       6.404ms       0.000us         0.00%     288.000us      14.400us           0 b           0 b      47.41 Mb           0 b            20  
+                           aten::_batch_norm_impl_index         0.02%     428.000us         5.45%     128.003ms       6.400ms       0.000us         0.00%     288.000us      14.400us           0 b           0 b      47.41 Mb           0 b            20  
+                                 aten::cudnn_batch_norm         1.14%      26.655ms         5.44%     127.575ms       6.379ms     288.000us        17.05%     288.000us      14.400us           0 b           0 b      47.41 Mb           0 b            20  
+void cudnn::bn_fw_tr_1C11_singleread<float, 512, tru...         0.00%       0.000us         0.00%       0.000us       0.000us     168.000us         9.95%     168.000us      11.200us           0 b           0 b           0 b           0 b            15  
+-------------------------------------------------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  
+Self CPU time total: 2.347s
+Self CUDA time total: 1.689ms
+

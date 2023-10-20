@@ -1,0 +1,64 @@
+Distributor ID:	Ubuntu
+Description:	Ubuntu 22.04.2 LTS
+Release:	22.04
+Codename:	jammy
+┌──────────────────────────┐
+│ Experimental Environment │
+└──────────────────────────┘
+platform: Linux-4.19.91-012.ali4000.alios7.x86_64-x86_64-with-glibc2.35
+node: dsw-26455-5dfc8d87fb-fjgb7
+time: 2023-10-20 11:03:34.286323
+python interpreter: /mnt/workspace/maokangkun/anaconda3/bin/python
+python version: 3.10.13 (main, Sep 11 2023, 13:44:35) [GCC 11.2.0]
+device: gpu
+CUDA version: 11.8
+driver version: 470.103.01
+cuDNN version: 8700
+nccl version: 2.18.5
+gpu usable count: 2
+gpu total count: 2
+    gpu 0: NVIDIA GeForce RTX 3090, [mem]     2M / 24268M,  0%,  25°C, 🔋 8
+    gpu 1: NVIDIA GeForce RTX 3090, [mem]     2M / 24268M,  0%,  26°C, 🔋 8
+gpu direct communication matrix:
+	[4mGPU0	GPU1	CPU Affinity	NUMA Affinity[0m
+GPU0	 X 	PHB	0-127	0-1
+GPU1	PHB	 X 	0-127	0-1
+cpu: [logical] 128, [physical] 64, [usage] 0.5%
+virtual memory: [total] 96.0GB, [avail] 87.0GB, [used] 9.0GB 9.4%
+disk usage: [total] 491.0GB, [free] 190.7GB, [used] 279.7GB 59.5%
+current dir: /mnt/workspace/maokangkun/gpu_test
+user: root
+shell: /bin/zsh
+python packages version:
+    torch: 2.1.0
+    transformers: 4.32.1
+    triton: 2.1.0
+┌─────────────────────────────────┐
+│ Matrix Multiplication Benchmark │
+└─────────────────────────────────┘
+Matrix: A [16384 x 16384], B [16384 x 16384]
+Operation: A @ B
+Experiment: 50
+Tensor:
+    - torch.float16 | 0.11341s (median) | 77.5590 TFLOPS | GPU mem allocated 1.5GB, reserved 1.5GB
+    - torch.float32 | 0.36704s (median) | 23.9648 TFLOPS | GPU mem allocated 3.0GB, reserved 4.5GB
+┌─────────────────────────────┐
+│ Resnet18 Inference Profiler │
+└─────────────────────────────┘
+-------------------------------------------------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  
+                                                   Name    Self CPU %      Self CPU   CPU total %     CPU total  CPU time avg     Self CUDA   Self CUDA %    CUDA total  CUDA time avg       CPU Mem  Self CPU Mem      CUDA Mem  Self CUDA Mem    # of Calls  
+-------------------------------------------------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  
+                                        model_inference         0.49%       4.996ms       100.00%        1.023s        1.023s       0.000us         0.00%       1.874ms       1.874ms           0 b           0 b           0 b    -107.39 Mb             1  
+                                           aten::conv2d         0.01%      98.000us        91.95%     941.050ms      47.053ms       0.000us         0.00%       1.386ms      69.300us           0 b           0 b      47.51 Mb           0 b            20  
+                                      aten::convolution         0.02%     244.000us        91.94%     940.952ms      47.048ms       0.000us         0.00%       1.386ms      69.300us           0 b           0 b      47.51 Mb           0 b            20  
+                                     aten::_convolution         0.02%     155.000us        91.92%     940.708ms      47.035ms       0.000us         0.00%       1.386ms      69.300us           0 b           0 b      47.51 Mb           0 b            20  
+                                aten::cudnn_convolution         8.85%      90.598ms        91.91%     940.553ms      47.028ms       1.386ms        73.96%       1.386ms      69.300us           0 b           0 b      47.51 Mb      47.51 Mb            20  
+sm86_xmma_fprop_implicit_gemm_tf32f32_tf32f32_f32_nh...         0.00%       0.000us         0.00%       0.000us       0.000us     290.000us        15.47%     290.000us      96.667us           0 b           0 b           0 b           0 b             3  
+void cudnn::ops::nchwToNhwcKernel<float, float, floa...         0.00%       0.000us         0.00%       0.000us       0.000us     270.000us        14.41%     270.000us       7.941us           0 b           0 b           0 b           0 b            34  
+                                 aten::cudnn_batch_norm         0.45%       4.590ms         7.34%      75.122ms       3.756ms     242.000us        12.91%     242.000us      12.100us           0 b           0 b      47.41 Mb           0 b            20  
+                                       aten::batch_norm         0.00%      14.000us         7.36%      75.291ms       3.765ms       0.000us         0.00%     234.000us      11.700us           0 b           0 b      47.41 Mb      -4.79 Mb            20  
+sm86_xmma_fprop_implicit_gemm_indexed_tf32f32_tf32f3...         0.00%       0.000us         0.00%       0.000us       0.000us     230.000us        12.27%     230.000us      57.500us           0 b           0 b           0 b           0 b             4  
+-------------------------------------------------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  
+Self CPU time total: 1.023s
+Self CUDA time total: 1.874ms
+
