@@ -10,12 +10,21 @@ from torch.utils import benchmark
 import pynvml # pip install nvidia-ml-py
 import torchvision.models as models
 from torch.profiler import profile, record_function, ProfilerActivity
+from rich import print as rprint
 
 def print_title(title):
     n = len(title) + 2
     print('┌' + '─'*n + '┐')
     print(f'│ {title} │')
     print('└' + '─'*n + '┘')
+
+def print_info(item, tab=''):
+    if type(item[1]) is dict:
+        rprint(f'[green]{item[0]}:[/]')
+        t = ' '*4
+        for i in item[1].items(): print_info(i, tab=tab+t)
+    else:
+        rprint(f'{tab}[green]{item[0]}:[/] [cyan]{item[1]}[/]')
 
 def bytes2str(item):
     if type(item) is bytes:
@@ -42,14 +51,30 @@ def size_num_format(n):
 
 def watermark():
     print_title('Experimental Environment')
-    os.system('lsb_release -a')
-    print(f'platform: {platform.platform()}')
-    print(f'node: {platform.node()}')
-    print(f'time: {datetime.datetime.now()}')
-    print(f'python interpreter: {sys.executable}')
-    print(f'python version: '+sys.version.replace('\n',''))
-    device = 'gpu' if torch.cuda.is_available() else 'cpu'
-    print(f'device: {device}')
+    if sys.platform == 'linux':
+        os.system('lsb_release -a')
+        device = 'gpu' if torch.cuda.is_available() else 'cpu'
+    elif sys.platform == 'darwin':
+        device = 'mps' if torch.backends.mps.is_available() and torch.backends.mps.is_built()  else 'cpu'
+    elif sys.platform == 'win32':
+        device = 'gpu' if torch.cuda.is_available() else 'cpu'
+
+    user_info = pwd.getpwuid(os.getuid())
+    base_info = {
+        'platform': platform.platform(),
+        'node': platform.node(),
+        'time': datetime.datetime.now(),
+        'user': user_info.pw_name,
+        'shell': user_info.pw_shell,
+        'current dir': os.getcwd(),
+        'cpu': f'\\[logical] {psutil.cpu_count()}, \\[physical] {psutil.cpu_count(logical=False)}, \\[usage] {psutil.cpu_percent()}%',
+        'virtual memory': f'\\[total] {size_num_format(psutil.virtual_memory().total)}, \\[avail] {size_num_format(psutil.virtual_memory().available)}, \\[used] {size_num_format(psutil.virtual_memory().used)} {psutil.virtual_memory().percent}%',
+        'disk usage': f'\\[total] {size_num_format(psutil.disk_usage("/").total)}, \\[free] {size_num_format(psutil.disk_usage("/").free)}, \\[used] {size_num_format(psutil.disk_usage("/").used)} {psutil.disk_usage("/").percent}%',
+    }
+    gpu_info = {
+        'device': device,
+    }
+
     if device == 'gpu':
         pynvml.nvmlInit()
         print(f'CUDA version: {torch.version.cuda}')
@@ -71,54 +96,58 @@ def watermark():
         pynvml.nvmlShutdown()
         # print(torch.cuda.memory_summary())
 
-    print('gpu direct communication matrix:')
-    ret = os.popen('nvidia-smi topo -m')
-    print(ret.read().split('\n\nLegend')[0])
-    """
-    X    = Self
-    SYS  = Connection traversing PCIe as well as the SMP interconnect between NUMA nodes (e.g., QPI/UPI)
-    NODE = Connection traversing PCIe as well as the interconnect between PCIe Host Bridges within a NUMA node
-    PHB  = Connection traversing PCIe as well as a PCIe Host Bridge (typically the CPU)
-    PXB  = Connection traversing multiple PCIe bridges (without traversing the PCIe Host Bridge)
-    PIX  = Connection traversing at most a single PCIe bridge
-    NV#  = Connection traversing a bonded set of # NVLinks
-    在这里面, GPU间的通讯速度: NV# > PIX > PXB > PHB > NODE > SYS
-    """
+        print('gpu direct communication matrix:')
+        ret = os.popen('nvidia-smi topo -m')
+        print(ret.read().split('\n\nLegend')[0])
+        """
+        X    = Self
+        SYS  = Connection traversing PCIe as well as the SMP interconnect between NUMA nodes (e.g., QPI/UPI)
+        NODE = Connection traversing PCIe as well as the interconnect between PCIe Host Bridges within a NUMA node
+        PHB  = Connection traversing PCIe as well as a PCIe Host Bridge (typically the CPU)
+        PXB  = Connection traversing multiple PCIe bridges (without traversing the PCIe Host Bridge)
+        PIX  = Connection traversing at most a single PCIe bridge
+        NV#  = Connection traversing a bonded set of # NVLinks
+        在这里面, GPU间的通讯速度: NV# > PIX > PXB > PHB > NODE > SYS
+        """
+    elif device == 'mps':
+        ...
 
-    print(f'cpu: [logical] {psutil.cpu_count()}, [physical] {psutil.cpu_count(logical=False)}, [usage] {psutil.cpu_percent()}%')
-    print(f'virtual memory: [total] {size_num_format(psutil.virtual_memory().total)}, [avail] {size_num_format(psutil.virtual_memory().available)}, [used] {size_num_format(psutil.virtual_memory().used)} {psutil.virtual_memory().percent}%')
-    print(f'disk usage: [total] {size_num_format(psutil.disk_usage("/").total)}, [free] {size_num_format(psutil.disk_usage("/").free)}, [used] {size_num_format(psutil.disk_usage("/").used)} {psutil.disk_usage("/").percent}%')
-    print(f'current dir: {os.getcwd()}')
+    python_info = {
+        'python interpreter': sys.executable,
+        'python version': sys.version.replace('\n',''),
+        'python packages version': {
+            'torch': torch.__version__,
+            'transformers': transformers.__version__,
+        }
+    }
 
-    user_info = pwd.getpwuid(os.getuid())
-    print(f'user: {user_info.pw_name}')
-    print(f'shell: {user_info.pw_shell}')
-    print('python packages version:')
-    print(f'    torch: {torch.__version__}')
-    print(f'    transformers: {transformers.__version__}')
     deepspeed_isinstalled = False
     try:
         import deepspeed
-        print(f'    deepspeed: {deepspeed.__version__}')
+        python_info['python packages version'] |= {'deepspeed': deepspeed.__version__}
         deepspeed_isinstalled = True
     except ImportError: pass
     try:
         import flash_attn
-        print(f'    flash-attn: {flash_attn.__version__}')
+        python_info['python packages version'] |= {'flash-attn': flash_attn.__version__}
     except ImportError: pass
     try:
         import triton
-        print(f'    triton: {triton.__version__}')
+        python_info['python packages version'] |= {'triton': triton.__version__}
     except ImportError: pass
+
+    info_dict = base_info | gpu_info | python_info
+    list(map(print_info, info_dict.items()))
 
     if deepspeed_isinstalled:
         from deepspeed.env_report import cli_main
         print_title('DeepSpeed Report')
         cli_main()
+    
+    return device
 
-def run_benchmark():
+def run_benchmark(device):
     print_title('Matrix Multiplication Benchmark')
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     n = 1024 * 16
     op = 'A @ B'
@@ -133,20 +162,19 @@ def run_benchmark():
         a = torch.randn(n, n).type(typ).to(device)
         b = torch.randn(n, n).type(typ).to(device)
 
-        t = benchmark.Timer(
+        bench = benchmark.Timer(
             stmt=op,
             globals={'A': a, 'B': b}
         )
-        
-        x = t.timeit(run_times)
-        flops = 2*n**3 / x.median
+        t = bench.timeit(run_times).median
+        flops = 2*n**3 / t
 
-        print(f'    - {typ} | {x.median:.5f}s (median) | {flops / 1e12:.4f} TFLOPS | GPU mem allocated {size_num_format(torch.cuda.max_memory_allocated())}, reserved {size_num_format(torch.cuda.max_memory_reserved())}')
-        torch.cuda.reset_peak_memory_stats()
+        print(f'    - {typ} | {t:.5f}s (median) | {flops / 1e12:.4f} TFLOPS | GPU mem allocated {size_num_format(torch.cuda.max_memory_allocated())}, reserved {size_num_format(torch.cuda.max_memory_reserved())}')
+        if device == 'cuda':
+            torch.cuda.reset_peak_memory_stats()
 
-def run_profiler():
+def run_profiler(device):
     print_title('Resnet18 Inference Profiler')
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = models.resnet18().to(device)
     inputs = torch.randn(5, 3, 224, 224).to(device)
 
@@ -177,12 +205,12 @@ def run_gpu_p2p_benchmark():
     print(ret[i:j])
 
 def main():
-    watermark()
-    if torch.cuda.is_available() and torch.cuda.device_count() > 0:
-        run_benchmark()
-        run_profiler()
-    else:
-        print(f'[Warning] torch cuda: {torch.cuda.is_available()}, GPU total nums: {pynvml.nvmlDeviceGetCount()}, availabel: {torch.cuda.device_count()}')
+    device = watermark()
+    if device != 'cpu':
+        run_benchmark(device)
+        run_profiler(device)
+    # else:
+    #     print(f'[Warning] torch cuda: {torch.cuda.is_available()}, GPU total nums: {pynvml.nvmlDeviceGetCount()}, availabel: {torch.cuda.device_count()}')
 
 if __name__ == '__main__':
     main()
